@@ -1,177 +1,229 @@
-import React, { useEffect, useState } from "react"
-import { Animated, Dimensions } from "react-native"
+# React Native Wizard
 
-export default React.forwardRef(
-  (
+Easy, convenient, quick-forming Wizard component for React Native.  Also this package is providing simple usage with few props and functions. You can see examples below the page.
+
+<p align='center'><img src='./example/react-native-wizard.gif' alt='ReactNativeWizard'></p>
+
+
+## v2.0.0 Released. _This is a fresh start. :)_
+With _v2.0.0_ almost everything changed.
+- 5 animation added.
+- Next step / prev step animation props added.
+- Transition issues solved, duration props work well.
+- Last step, first step callbacks added.
+- Step change callback added. `currentStep(({currentStep, isLastStep, isFirstStep})=>{})`
+- onFinish callback removed. You can easily use `isLastStep` for this callback.
+
+## Getting Started
+
+**With NPM**
+
+```
+npm install --save react-native-wizard
+```
+
+**With YARN**
+
+```
+yarn add react-native-wizard
+```
+
+## Props
+
+| Props                 |Description|Type|Required|Default|
+|-----------------------|-----------------------|------|--------|-------|
+|activeStep             |For setting active step at start.|`int`|**No**|`0`|
+|ref                    |You need to set ref for using some function like `goTo()`, `next()` etc.|`void`|**Yes**|-|
+|currentStep            |You can get current step index. Also you can get that step is last step or first step. Also you can use isFirstStep and isLastStep callbacks.|`void`|**No**|-|
+|isFirstStep            |You can get active step is first step or not with this callback. This callback is returning `boolean` value|`void`|**No**|-|
+|isLastStep             |You can get active step is last step or not with this callback. This callback is returning `boolean` value|`void`|**No**|-|
+|duration               |You can set duration of transition animation.|`int`|**No**|`500`|
+|onNext                 |If next button click and step is change, this function will run.|`void`|**No**|-|
+|onPrev                 |If prev button click and step is change, this function will run.|`void`|**No**|-|
+|steps                  |You can set steps with this prop.|`object`|**Yes**|-|
+|nextStepAnimation      |You can set animation for next step transition.|`string`|**No**|`fade`|
+|prevStepAnimation      |You can set animation for prev step transition.|`string`|**No**|`fade`|
+|useNativeDriver        |You can set useNativeDriver for all Animated used by the package ([more info here](https://reactnative.dev/blog/2017/02/14/using-native-driver-for-animated)). |`boolean`|**No**|`true`|
+
+## Animations (`nextStepAnimation="fade"`)
+You can use this animations for `prevStep` or `nextStep`
+
+|Animation List|
+|-----------------|
+|`fade`           |
+|`slideLeft`      |
+|`slideRight`     |
+|`slideUp`        |
+|`slideDown`      |
+
+
+## Reference Functions
+
+**With functional component and hooks**
+I sincerely recommend using `hooks`.
+```javascript
+import React, {useRef} from 'react'
+const wizard = useRef(null)
+// Usage
+<Wizard ref={wizard} />
+```
+
+**With class component**
+If you're not using functional component so you should create a ref with `React.createRef()`.
+```javascript
+wizard = React.createRef()
+<Wizard ref={this.wizard} />
+```
+
+| Props                 |Usage _without_ useRef | Usage _with_ useRef|
+|-----------------------|-----------------------|-------------------------|
+|next()                 |this.wizard.current.next() | wizard.current.next()|
+|prev()                 |this.wizard.current.prev() | wizard.current.prev() |
+|goTo(`stepIndex`)      |this.wizard.current.goTo(`stepIndex`) |wizard.current.goTo(`stepIndex`)|
+
+## Understanding the usage of Step
+
+This wizard using your component class/function as a child. Every time this Wizard rendering your active step.
+
+## Example App
+
+You can find the usage example of the package in the example folder.
+
+```sh
+git clone https://github.com/talut/react-native-wizard
+
+cd react-native-wizard/example
+
+npm install
+
+react-native run-ios/android
+```
+
+## Basic Usage
+
+```javascript
+import React, {useRef,useState} from 'react'
+// import Wizard
+import Wizard from "react-native-wizard"
+
+// Import your own step components
+import Step1 from "./yourStepsDir/Step1";
+import Step2 from "./yourStepsDir/Step2";
+import Step3 from "./yourStepsDir/Step3";
+
+// ...
+
+const wizard = useRef();
+const [isFirstStep, setIsFirstStep] = useState()
+const [isLastStep, setIsLastStep] = useState()
+const stepList = [
     {
-        steps,
-        activeStep = 0,
-        currentStep = () => {},
-        onNext = () => {},
-        onPrev = () => {},
-        isFirstStep = () => {},
-        isLastStep = () => {},
-        duration = 500,
-        nextStepAnimation = "fade",
-        prevStepAnimation = "fade",
-        useNativeDriver = true,
+      content: <Image source={{uri: "http://placehold.it/96x96"}} style={{width:50, height:50}}/>,
     },
-    ref
-  ) => {
-      const [activeStepNo, setActiveStepNo] = useState(activeStep)
-      const [isNext, setIsNext] = useState(true)
-      ref.current = {
-          next: () => {
-              if (steps.length - 1 !== activeStepNo) {
-                  setActiveStepNo(activeStepNo + 1)
-                  setIsNext(true)
-                  currentStep({
-                      currentStep: activeStepNo + 1,
-                      isFirstStep: activeStepNo + 1 === 0,
-                      isLastStep: activeStepNo + 1 === steps.length - 1,
-                  })
-                  onNext()
-              }
-          },
-          prev: () => {
-              if (activeStepNo > 0) {
-                  setActiveStepNo(activeStepNo - 1)
-                  setIsNext(false)
-                  currentStep({
-                      currentStep: activeStepNo - 1,
-                      isFirstStep: activeStepNo - 1 === 0,
-                      isLastStep: activeStepNo - 1 === steps.length - 1,
-                  })
-                  onPrev()
-              }
-          },
-          goTo: step => {
-              if (steps.length - 1 <= step || step >= 0) {
-                  if (activeStepNo > step) {
-                      setIsNext(false)
-                      onPrev()
-                  } else {
-                      setIsNext(true)
-                      onNext()
-                  }
-                  currentStep({ currentStep: step, isFirstStep: step === 0, isLastStep: step !== 0 })
-                  setActiveStepNo(step)
-              }
-          },
-      }
+    {
+      content: <Step2 testProp="Welcome to Second Step"/>
+    },
+    {
+      content: <Step3 step3Prop="Welcome to Third Step"/>
+    },
+   ]
+   <Wizard
+        ref={wizard}
+        activeStep={0}
+        steps={stepList}
+        isFirstStep={val => setIsFirstStep(val)}
+        isLastStep={val => setIsLastStep(val)}
+        onNext={() => {
+            console.log("Next Step Called")
+        }}
+        onPrev={() => {
+            console.log("Previous Step Called")
+        }}
+        currentStep={({ currentStep, isLastStep, isFirstStep }) => {
+            setCurrentStep(currentStep)
+        }}
+    />
+```
 
-      useEffect(() => {
-          currentStep({
-              currentStep: activeStepNo,
-              isFirstStep: activeStepNo === 0,
-              isLastStep: activeStepNo === steps.length - 1,
-          })
-      },[activeStepNo, steps.length])
+## Advanced Usage Example
 
-      useEffect(() => {
-          isFirstStep(activeStepNo === 0)
-          isLastStep(activeStepNo === steps.length - 1)
-      }, [activeStepNo, steps.length])
-      return (
-        <Step
-          currentStep={activeStepNo}
-          duration={duration}
-          animation={isNext ? nextStepAnimation : prevStepAnimation}
-          content={steps[activeStepNo].content}
-          useNativeDriver={useNativeDriver}
+```javascript
+import React, { useRef, useState } from "react"
+import { SafeAreaView, Button, View, Text } from "react-native"
+import Wizard from "react-native-wizard"
+
+export default () => {
+  const wizard = useRef()
+  const [isFirstStep, setIsFirstStep] = useState(true)
+  const [isLastStep, setIsLastStep] = useState(false)
+  const [currentStep, setCurrentStep] = useState(0)
+  const stepList = [
+    {
+      content: <View style={{ width: 100, height: 100, backgroundColor: "#000" }} />,
+    },
+    {
+      content: <View style={{ width: 100, height: 100, backgroundColor: "#e04851" }} />,
+    },
+    {
+      content: <View style={{ width: 100, height: 500, backgroundColor: "#9be07d" }} />,
+    },
+    {
+      content: <View style={{ width: 100, height: 100, backgroundColor: "#2634e0" }} />,
+    },
+  ]
+
+  return (
+    <View>
+      <SafeAreaView style={{ backgroundColor: "#FFF" }}>
+        <View
+          style={{
+            justifyContent: "space-between",
+            flexDirection: "row",
+            backgroundColor: "#FFF",
+            borderBottomColor: "#dedede",
+            borderBottomWidth: 1,
+          }}>
+          <Button disabled={isFirstStep} title="Prev" onPress={() => wizard.current.prev()} />
+          <Text>{currentStep + 1}. Step</Text>
+          <Button disabled={isLastStep} title="Next" onPress={() => wizard.current.next()} />
+        </View>
+      </SafeAreaView>
+      <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <Wizard
+          ref={wizard}
+          steps={stepList}
+          isFirstStep={val => setIsFirstStep(val)}
+          isLastStep={val => setIsLastStep(val)}
+          onNext={() => {
+            console.log("Next Step Called")
+          }}
+          onPrev={() => {
+            console.log("Previous Step Called")
+          }}
+          currentStep={({ currentStep, isLastStep, isFirstStep }) => {
+            setCurrentStep(currentStep)
+          }}
         />
-      )
-  }
-)
-
-const Step = ({ content, animation, duration, currentStep, useNativeDriver }) => {
-    const [style, setStyle] = useState(undefined)
-    useEffect(() => {
-        switch (animation) {
-            case "slideLeft": {
-                const slideLeft = new Animated.Value(-Dimensions.get("window").width)
-                Animated.timing(slideLeft, {
-                    toValue: 0,
-                    duration: duration,
-                    useNativeDriver,
-                }).start()
-                setStyle({
-                    transform: [
-                        {
-                            translateX: slideLeft,
-                        },
-                    ],
-                })
-                break
-            }
-            case "slideRight": {
-                const slideRight = new Animated.Value(Dimensions.get("window").width)
-                Animated.timing(slideRight, {
-                    toValue: 0,
-                    duration: duration,
-                    useNativeDriver,
-                }).start()
-                setStyle({
-                    transform: [
-                        {
-                            translateX: slideRight,
-                        },
-                    ],
-                })
-                break
-            }
-
-            case "slideUp": {
-                const slideUp = new Animated.Value(-Dimensions.get("window").height)
-                Animated.timing(slideUp, {
-                    toValue: 0,
-                    duration: duration,
-                    useNativeDriver,
-                }).start()
-                setStyle({
-                    transform: [
-                        {
-                            translateY: slideUp,
-                        },
-                    ],
-                })
-                break
-            }
-            case "slideDown": {
-                const slideDown = new Animated.Value(Dimensions.get("window").height)
-                Animated.timing(slideDown, {
-                    toValue: 0,
-                    duration: duration,
-                }).start()
-                setStyle({
-                    transform: [
-                        {
-                            translateY: slideDown,
-                        },
-                    ],
-                })
-                break
-            }
-            case "fade":
-            default: {
-                const opacity = new Animated.Value(0)
-                Animated.timing(opacity, {
-                    toValue: 1,
-                    duration: duration,
-                    useNativeDriver,
-                }).start()
-                setStyle({ opacity: opacity })
-            }
-        }
-        return () => {
-            const opacity = new Animated.Value(1)
-            Animated.timing(opacity, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver,
-            }).start()
-            setStyle({ opacity: opacity })
-        }
-    }, [animation, duration, setStyle, currentStep])
-    return <Animated.View style={style}>{content}</Animated.View>
+        <View style={{ flexDirection: "row", margin: 18 }}>
+          {stepList.map((val, index) => (
+            <View
+              key={"step-indicator-" + index}
+              style={{
+                width: 10,
+                marginHorizontal: 6,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: index === currentStep ? "#fc0" : "#000",
+              }}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  )
 }
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
